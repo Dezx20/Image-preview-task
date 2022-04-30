@@ -4,14 +4,30 @@
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link href="./style.css" rel="stylesheet" />
     <title>Web-wizards-task</title>
   </head>
   <body>
-    <input type="file" id="filetag" />
-    <img src="" id="preview" />
+    <div class="main-container">
+      <div class="menu_bar">
+        <div class="btn_select_img">
+          <input type="file" id="filetag" name="file" />
+        </div>
+        <div class="btn">Clear</div>
+        <div class="btn">Reset</div>
+        <div class="btn">Download</div>
+        <div class="btn"><</div>
+        <div class="btn">></div>
+        <div class="btn">Deactivate cursor</div>
+        <div class="btn">Delete Object</div>
+      </div>
+      <canvas id="c" width="1000px" height="800px"></canvas>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/521/fabric.min.js"></script>
     <script>
-      var fileTag = document.getElementById("filetag"),
-        preview = document.getElementById("preview");
+      var canvas = new fabric.Canvas("c");
+      var fileTag = document.getElementById("filetag");
 
       fileTag.addEventListener("change", function () {
         changeImage(this);
@@ -20,31 +36,90 @@
       function changeImage(input) {
         var reader;
 
-        if (input.files && input.files[0]) {
-          reader = new FileReader();
+        var img = canvas.getActiveObject();
+        canvas.remove(img);
+        document.getElementById("c").fabric = canvas;
 
-          reader.onload = function (e) {
-            preview.setAttribute("src", e.target.result);
-          };
+        let objectURL = URL.createObjectURL(input.files[0]);
 
-          reader.readAsDataURL(input.files[0]);
-        }
+        fabric.Image.fromURL(objectURL, function (oImg) {
+          oImg.set({
+            scaleX: canvas.getWidth() / oImg.width,
+            scaleY: canvas.getHeight() / oImg.height,
+          });
+
+          oImg.setControlsVisibility({
+            mt: false,
+            mb: false,
+            ml: false,
+            mr: false,
+            bl: false,
+            br: false,
+            tl: false,
+            tr: false,
+            mtr: false,
+          });
+          // canvas.clear();
+          // canvas.remove(canvas.getActiveObject());
+          canvas.centerObject(oImg);
+          canvas.setActiveObject(oImg);
+
+          canvas.add(oImg);
+
+          var timeoutTriggered = false;
+
+          canvas.item(0).lockMovementY = true;
+          canvas.item(0).lockMovementX = true;
+        });
       }
-    </script>
+      canvas.on("mouse:wheel", function (opt) {
+        var delta = opt.e.deltaY;
+        var zoom = canvas.getZoom();
+        zoom *= 0.999 ** delta;
+        if (zoom > 20) zoom = 20;
+        if (zoom < 1) {
+          zoom = 1;
+          // canvas.zoomToPoint(
+          //   {
+          //     x: (canvas.getWidth() / canvas.item(0).width) * 2,
+          //     y: (canvas.getHeight() / canvas.item(0).height) * 2,
+          //   },
+          //   zoom
+          // );
+          // canvas.item(0).set({
+          //   width: canvas.getWidth(),
+          //   height: canvas.getHeight(),
+          //   originX: "left",
+          //   originY: "top",
+          //   left: 0,
+          //   top: 0,
+          //   window: canvas.getWidth() / oImg.width,
+          //   height: canvas.getHeight() / oImg.height,
+          // });
+          var y = document.getElementById("c").fabric;
+          console.log("->", y);
+          // y.set({
+          //   width: canvas.getWidth(),
+          //   height: canvas.getHeight(),
+          //   originX: "left",
+          //   originY: "top",
+          //   left: 0,
+          //   top: 0,
+          //   scaleX: canvas.getWidth() / y.width,
+          //   scaleY: canvas.getHeight() / y.height,
+          // });
+          canvas.setViewportTransform([1, 0, 0, 1, 0, 0]);
+          // var img = canvas.getActiveObject();
+          // canvas.remove(img);
+          // canvas.centerObject(img);
+          // canvas.setActiveObject(img);
+          // canvas.add(img);
 
-    <canvas id="canvas" width="300" height="300"></canvas>
-    <script src="lib/fabric.js">
-      var canvas = new fabric.Canvas("canvas");
-
-      var rect = new fabric.Rect({
-        top: 100,
-        left: 100,
-        width: 60,
-        height: 70,
-        fill: "red",
+          // canvas.renderAll();
+        } else canvas.zoomToPoint({ x: opt.e.offsetX, y: opt.e.offsetY }, zoom);
+        opt.e.preventDefault();
+        opt.e.stopPropagation();
       });
-
-      canvas.add(rect);
     </script>
   </body>
 </html>
